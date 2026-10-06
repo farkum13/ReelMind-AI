@@ -35,6 +35,9 @@ class SceneAudio(BaseModel):
     path: str
     duration_seconds: float
     narration: str
+    # Offset of this scene in the concatenated voiceover. The video compiler
+    # needs it to hold image N on screen while narration N plays.
+    start_seconds: float = 0.0
 
 
 class AudioArtifact(BaseModel):

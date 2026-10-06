@@ -59,5 +59,10 @@ class JobWorkspace:
     def scene_audio_path(self, scene_number: int) -> Path:
         return self.scenes_audio_dir / f"scene_{scene_number:02d}.mp3"
 
+    def scene_timing_path(self, scene_number: int) -> Path:
+        """Per-scene word timings, so the voiceover can be re-concatenated
+        without re-synthesizing."""
+        return self.scenes_audio_dir / f"scene_{scene_number:02d}.timings.json"
+
     def scene_image_path(self, scene_number: int) -> Path:
         return self.root / "visuals" / f"scene_{scene_number:02d}.png"
