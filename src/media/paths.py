@@ -55,6 +55,10 @@ class JobWorkspace:
     def voice_rotation_db_path(self) -> Path:
         return self.storage_root / ".voice_rotation.sqlite3"
 
+    @property
+    def captions_dir(self) -> Path:
+        return self.root / "captions"
+
     # --- dynamic paths ---
     def scene_audio_path(self, scene_number: int) -> Path:
         return self.scenes_audio_dir / f"scene_{scene_number:02d}.mp3"

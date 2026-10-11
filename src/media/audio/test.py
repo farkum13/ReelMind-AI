@@ -133,7 +133,7 @@ def main() -> None:
             for _ in range(len(VOICE_SEQUENCE) + 1):
                 workspace = JobWorkspace.new(root=storage_root).create()
                 workspaces.append(workspace)
-                artifacts.append(asyncio.run(build_media(script, workspace)))
+                artifacts.append(asyncio.run(build_media(script, workspace, with_visuals=False)))
 
             # --- voice rotation -------------------------------------------------
             assert all(Path(a.audio.voiceover_path).exists() for a in artifacts)

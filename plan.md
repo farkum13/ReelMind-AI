@@ -108,7 +108,8 @@ Built with *CrewAI* or *LangGraph*, utilizing structured Pydantic output schemas
 #### Module 4: Media Production Pipeline (src/media/)
 
 1. *Audio Synthesis (edge-tts):* Generates high-definition Indian English or Hindi voiceover (en-IN-PrabhatNeural / hi-IN-MadhurNeural).
-2. *Visual Generation (Replicate / Fal.ai API):* Sends scene descriptions from the script to Flux.1 (fast image generation) or Runway/Luma (short motion clips).
+2. *Visual Generation ~~(Replicate / Fal.ai API)~~:* Sends scene descriptions from the script to Flux.1 (fast image generation) or Runway/Luma (short motion clips). 
+P.S. all the video generation are paid, going to use image generation(Pollinations.ai) and then stich it to video
 3. *Subtitle Engine (whisper / stable-ts):* Generates precise word-level timestamped .srt files for animated, burn-in captions.
 4. *Video Compiler (MoviePy / FFmpeg):*
 * Crops media to 9:16 ratio (1080x1920).

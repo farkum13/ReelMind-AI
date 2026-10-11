@@ -221,3 +221,7 @@ __marimo__/
 
 # Compiled Python artifacts
 *.py[cod]
+data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm

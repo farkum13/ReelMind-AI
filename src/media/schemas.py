@@ -28,6 +28,10 @@ class ScriptPayload(BaseModel):
     sources: list[str] = Field(default_factory=list)
     unverified_claims: list[str] = Field(default_factory=list)
     language: str = "en"                # reserved for the Hindi seam
+    visual_model: str = "flux.1-schnell"
+    visual_width: int = 1024
+    visual_height: int = 1792          # ~9:16
+    visual_style: str = ""
 
 
 class SceneAudio(BaseModel):
@@ -69,6 +73,24 @@ class SubtitleArtifact(BaseModel):
     segments: list[TranscriptSegment] = Field(default_factory=list)
 
 
+class SceneVisual(BaseModel):
+    scene_number: int
+    image_path: str
+    prompt: str
+    seed: int
+    model: str
+    width: int
+    height: int
+
+
+class VisualArtifact(BaseModel):
+    model: str
+    width: int
+    height: int
+    scenes: list[SceneVisual] = Field(default_factory=list)
+    error: list[str] = Field(default_factory=list)
+
+
 class JobArtifacts(BaseModel):
     job_id: str
     topic: str = ""
@@ -77,6 +99,5 @@ class JobArtifacts(BaseModel):
     error: Optional[str] = None
     audio: Optional[AudioArtifact] = None
     subtitles: Optional[SubtitleArtifact] = None
-    # later phases:
-    visuals: Optional[dict] = None
+    visuals: Optional[VisualArtifact] = None
     final_video_path: Optional[str] = None
