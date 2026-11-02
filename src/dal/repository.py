@@ -179,6 +179,41 @@ def list_videos(
     return [_row_to_video(r) for r in rows]
 
 
+def claim_next_pending_video(db_path: Path = DEFAULT_DB_PATH) -> VideoRow | None:
+    """Atomically claim the oldest pending job for a single worker."""
+    with get_conn(db_path) as c:
+        c.execute("BEGIN IMMEDIATE")
+        row = c.execute(
+            "SELECT * FROM videos WHERE status = ? ORDER BY created_at ASC LIMIT 1",
+            (VideoStatus.PENDING.value,),
+        ).fetchone()
+        if row is None:
+            return None
+
+        c.execute(
+            "UPDATE videos SET status = ?, updated_at = ? WHERE job_id = ?",
+            (VideoStatus.PROCESSING.value, now_iso(), row["job_id"]),
+        )
+        claimed = c.execute(
+            "SELECT * FROM videos WHERE job_id = ?", (row["job_id"],)
+        ).fetchone()
+    return _row_to_video(claimed)
+
+
+def requeue_processing_videos(db_path: Path = DEFAULT_DB_PATH) -> int:
+    """Make interrupted jobs available again after a single-worker restart."""
+    with get_conn(db_path) as c:
+        result = c.execute(
+            "UPDATE videos SET status = ?, updated_at = ? WHERE status = ?",
+            (
+                VideoStatus.PENDING.value,
+                now_iso(),
+                VideoStatus.PROCESSING.value,
+            ),
+        )
+    return result.rowcount
+
+
 def pick_next_rendered(db_path: Path = DEFAULT_DB_PATH) -> VideoRow | None:
     """FIFO — oldest RENDERED video first."""
     with get_conn(db_path) as c:

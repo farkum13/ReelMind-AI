@@ -1,4 +1,6 @@
+import logging
 import os
+from collections.abc import Awaitable, Callable
 from typing import Any
 
 from dotenv import load_dotenv
@@ -6,10 +8,19 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ApplicationBuilder, CallbackQueryHandler, CommandHandler, ContextTypes
 
 load_dotenv()
+logger = logging.getLogger(__name__)
+
+TopicsConfirmedCallback = Callable[[int, list[str]], Awaitable[None]]
 
 
 class TelegramTrendBot:
-    def __init__(self, token: str | None = None, user_id: int | None = None):
+    def __init__(
+        self,
+        token: str | None = None,
+        user_id: int | None = None,
+        *,
+        on_topics_confirmed: TopicsConfirmedCallback,
+    ):
         self.token = token or os.getenv("BOT_TOKEN")
         if not self.token:
             raise RuntimeError("BOT_TOKEN environment variable is not set.")
@@ -21,6 +32,8 @@ class TelegramTrendBot:
         self.app = ApplicationBuilder().token(self.token).build()
         self.selected_trends: dict[int, list[str]] = {}
         self.digest_trends: dict[int, list[Any]] = {}
+        self.on_topics_confirmed = on_topics_confirmed
+        self.add_handlers()
 
     def is_authorized(self, update: Update) -> bool:
         return bool(update.effective_user and update.effective_user.id == self.user_id)
@@ -102,9 +115,16 @@ class TelegramTrendBot:
                 await query.edit_message_text("No trends selected yet. Tap the topics you want to include.")
                 return
 
-            selected_text = "\n".join(f"• {t}" for t in selected)
-            await query.edit_message_text("Selected topics for the next step:\n\n" + selected_text)
+            topics = selected.copy()
             self.selected_trends[chat_id] = []
+            selected_text = "\n".join(f"• {topic}" for topic in topics)
+            await query.edit_message_text(
+                "Confirmed topics; starting script generation:\n\n" + selected_text
+            )
+            context.application.create_task(
+                self.on_topics_confirmed(chat_id, topics),
+                update=update,
+            )
             return
 
         if data.startswith("toggle:"):
@@ -129,19 +149,4 @@ class TelegramTrendBot:
         self.app.add_handler(CallbackQueryHandler(self.handle_trend_selection))
 
     def run(self) -> None:
-        self.add_handlers()
         self.app.run_polling()
-
-
-bot = TelegramTrendBot(
-    token=os.getenv("BOT_TOKEN"),
-    user_id=int(os.getenv("USER_ID", "0")),
-)
-
-
-def main() -> None:
-    bot.run()
-
-
-if __name__ == "__main__":
-    main()

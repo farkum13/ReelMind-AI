@@ -2,7 +2,8 @@ from enum import StrEnum
 
 
 class VideoStatus(StrEnum):
-    PENDING = "PENDING"       # agents done, media not started/finished
+    PENDING = "PENDING"       # waiting for the video worker
+    PROCESSING = "PROCESSING" # agents or media pipeline is running
     RENDERED = "RENDERED"     # media done, ready for upload
     QUEUED = "QUEUED"         # assigned to a slot, awaiting upload
     UPLOADED = "UPLOADED"     # successfully uploaded to YouTube
