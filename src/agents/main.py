@@ -1,25 +1,19 @@
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
-from pydantic import BaseModel
 
-from agents.critique.node import critique_node
-from agents.researcher.node import research_node
-from agents.scehmas import FinalPlan, VideoState
-from agents.scriptwriter.node import scriptwriter_node
+from src.agents.critique.node import critique_node
+from src.agents.researcher.node import research_node
+from src.agents.schemas import FinalPlan, VideoState
+from src.agents.scriptwriter.node import scriptwriter_node
+from src.agents.utils import as_dict
 
 
 # ---------------------------------------------------------------------------
 # Routing
 # ---------------------------------------------------------------------------
-def _as_dict(value: object) -> dict:
-    if isinstance(value, BaseModel):
-        return value.model_dump()
-    return value if isinstance(value, dict) else {}
-
-
 def route_after_critic(state: VideoState) -> str:
     """Decide what to do after the critique node."""
-    critique = _as_dict(state.get("critique"))
+    critique = as_dict(state.get("critique"))
     decision = critique.get("decision", "REVISE")
     revision_count = state.get("revision_count", 0)
     max_revisions = state.get("max_revisions", 2)
@@ -43,9 +37,9 @@ def route_after_critic(state: VideoState) -> str:
 # ---------------------------------------------------------------------------
 def finalize_node(state: VideoState) -> dict:
     """Collapse the run into a single final_plan dict and mark approval."""
-    script = _as_dict(state.get("script"))
-    critique = _as_dict(state.get("critique"))
-    research = _as_dict(state.get("research"))
+    script = as_dict(state.get("script"))
+    critique = as_dict(state.get("critique"))
+    research = as_dict(state.get("research"))
 
     decision = critique.get("decision", "REVISE")
     approved = decision == "APPROVE"

@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 dotenv.load_dotenv()
 POLLINATIONS_BASE = "https://gen.pollinations.ai/image"
 
-DEFAULT_MODEL = "flux.1-schnell"
+DEFAULT_MODEL = "flux"
 DEFAULT_WIDTH = 1024
 DEFAULT_HEIGHT = 1792          # ~9:16
 DEFAULT_STYLE_SUFFIX = (

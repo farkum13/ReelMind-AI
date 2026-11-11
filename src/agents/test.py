@@ -1,5 +1,5 @@
-from agents.main import agent
-from agents.scehmas import FinalPlan, VideoState
+from src.agents.main import agent
+from src.agents.schemas import FinalPlan, VideoState
 
 
 def run_over_topics(

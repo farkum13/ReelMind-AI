@@ -1,37 +1,25 @@
-import json
+import logging
 from langchain_core.messages import HumanMessage, SystemMessage
-from pydantic import BaseModel
 
-from agents.scehmas import Script, VideoState
-from agents.llm import get_llm
-from agents.scriptwriter.prompt import (
+from src.agents.schemas import Script, VideoState
+from src.agents.llm import get_llm, invoke_with_retry
+from src.agents.scriptwriter.prompt import (
     SCRIPTWRITER_SYSTEM_PROMPT,
     SCRIPTWRITER_USER_TEMPLATE,
     REVISION_BLOCK,
 )
-
-_llm = get_llm(temperature=0.7).with_structured_output(
-    Script, method="function_calling"
+from src.agents.utils import (
+    as_dict,
+    compact,
+    trim_critique,
+    trim_research_for_scriptwriter,
 )
 
+logger = logging.getLogger(__name__)
 
-def _as_dict(value: object) -> dict:
-    if isinstance(value, BaseModel):
-        return value.model_dump()
-    return value if isinstance(value, dict) else {}
-
-
-def _trim_research(research: dict) -> dict:
-    """Only pass what the scriptwriter needs. Cuts input tokens significantly."""
-    return {
-        "summary": research.get("summary", ""),
-        "why_trending": research.get("why_trending", ""),
-        "key_facts": research.get("key_facts", []),
-        "stats": research.get("stats", []),
-        "angles": research.get("angles", []),
-        "controversies": research.get("controversies", []),
-        "sources": research.get("sources", []),
-    }
+_llm = get_llm(temperature=0.7).with_structured_output(
+    Script, method="json_schema", strict=True
+)
 
 
 def scriptwriter_node(state: VideoState) -> dict:
@@ -40,8 +28,8 @@ def scriptwriter_node(state: VideoState) -> dict:
     revision_block = ""
     if is_revision:
         revision_block = REVISION_BLOCK.format(
-            script_json=json.dumps(_as_dict(state.get("script")), indent=2),
-            critique_json=json.dumps(_as_dict(state.get("critique")), indent=2),
+            script_json=compact(as_dict(state.get("script"))),
+            critique_json=compact(trim_critique(as_dict(state.get("critique")))),
         )
 
     user_prompt = SCRIPTWRITER_USER_TEMPLATE.format(
@@ -51,13 +39,16 @@ def scriptwriter_node(state: VideoState) -> dict:
         audience=state.get("audience", "general"),
         tone=state.get("tone", "engaging"),
         goal=state.get("goal", "educate and entertain"),
-        research_json=json.dumps(
-            _trim_research(_as_dict(state.get("research"))), indent=2
-        ),
+        research_json=compact(trim_research_for_scriptwriter(as_dict(state.get("research")))),
         revision_block=revision_block,
     )
 
-    script: Script = _llm.invoke([
+    logger.info(
+        "scriptwriter prompt chars=%d revision=%s",
+        len(user_prompt) + len(SCRIPTWRITER_SYSTEM_PROMPT), is_revision,
+    )
+
+    script: Script = invoke_with_retry(_llm, [
         SystemMessage(content=SCRIPTWRITER_SYSTEM_PROMPT),
         HumanMessage(content=user_prompt),
     ])

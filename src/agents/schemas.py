@@ -7,13 +7,13 @@ class ResearchBrief(BaseModel):
     topic: str
     summary: str
     why_trending: str
-    key_facts: list[dict]
-    stats: list[dict]
-    angles: list[dict]
-    controversies: list[str]
-    visuals: list[dict]
-    sources: list[dict]
-    knowledge_gaps: list[str]
+    key_facts: list[dict] = Field(default_factory=list)
+    stats: list[dict] = Field(default_factory=list)
+    angles: list[dict] = Field(default_factory=list)
+    controversies: list[str] = Field(default_factory=list)
+    visuals: list[dict] = Field(default_factory=list)
+    sources: list[dict] = Field(default_factory=list)
+    knowledge_gaps: list[str] = Field(default_factory=list)
 
 class Scene(BaseModel):
     scene_number: int
@@ -51,12 +51,19 @@ class FactCheckItem(BaseModel):
     source_url: str = ""
     note: str = ""
 
+class Scores(BaseModel):
+    factual_accuracy: float
+    hook_strength: float
+    structure_pacing: float
+    engagement: float
+    clarity: float
+    platform_fit: float
+    safety: float
+    originality: float
+
 class Critique(BaseModel):
     decision: Literal["APPROVE", "REVISE", "REJECT"]
-    scores: dict[str, float] = Field(
-        description="Keys: factual_accuracy, hook_strength, structure_pacing, "
-                    "engagement, clarity, platform_fit, safety, originality. Values 1–10."
-    )
+    scores: Scores
     overall_score: float
     strengths: list[str]
     issues: list[Issue]

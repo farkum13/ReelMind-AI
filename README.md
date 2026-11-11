@@ -86,7 +86,7 @@ python -m pip install -r requirements.txt
 Set the required environment variables, then start the app:
 
 ```sh
-PYTHONPATH=src uvicorn main:app --host 127.0.0.1 --port 7000 --workers 1
+uvicorn main:app --host 127.0.0.1 --port 7000 --workers 1
 ```
 
 The FastAPI lifespan initializes the SQLite database, starts Telegram polling, launches the video worker, and registers the daily trend and periodic publisher jobs. Keep this process running for scheduled jobs to execute.
@@ -126,7 +126,7 @@ The application stores its SQLite database at `data/publisher.sqlite`, generated
 For a cloud host that provides a `PORT` environment variable, use a single always-on instance and a single worker process:
 
 ```sh
-PYTHONPATH=src uvicorn main:app --host 0.0.0.0 --port "${PORT:-7000}" --workers 1
+uvicorn main:app --host 0.0.0.0 --port "${PORT:-7000}" --workers 1
 ```
 
 The host must allow outbound network access to Telegram, Google, Groq, Tavily, and the image-generation service. A free hosting tier that sleeps or stops the service will also stop Telegram polling, video processing, and scheduled jobs. The daily trend schedule uses the server's local timezone; configure it explicitly for your deployment if midnight must mean a specific timezone.

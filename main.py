@@ -35,6 +35,17 @@ from src.upload.routes import router as youtube_auth_router
 
 logger = logging.getLogger(__name__)
 
+# Uvicorn configures only its own loggers, so application INFO logs (media,
+# publisher, worker) would otherwise be dropped. Configure the root logger once.
+logging.basicConfig(
+    level=os.getenv("LOG_LEVEL", "INFO").upper(),
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
+# Telegram long-polling and outbound API calls log every request at INFO;
+# keep warnings/errors only so the pipeline logs stay readable.
+for _noisy in ("httpx", "httpcore"):
+    logging.getLogger(_noisy).setLevel(logging.WARNING)
+
 
 scheduler = AsyncIOScheduler()
 publisher_tick_lock = Lock()
@@ -90,7 +101,7 @@ async def enqueue_confirmed_topics(chat_id: int, topics: list[str]) -> None:
 
 async def process_video_job(job) -> None:
     """Run agents, media generation, and final MP4 compilation for one job."""
-    from agents.test import run_over_topics
+    from src.agents.test import run_over_topics
 
     plans = await asyncio.to_thread(
         run_over_topics,

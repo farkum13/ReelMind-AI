@@ -1,24 +1,22 @@
-import json
+import logging
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from agents.llm import get_llm
-from agents.critique.prompt import CRITIQUE_SYSTEM_PROMPT, CRITIQUE_USER_TEMPLATE
-from agents.scehmas import Critique, VideoState
+from src.agents.llm import get_llm, invoke_with_retry
+from src.agents.critique.prompt import CRITIQUE_SYSTEM_PROMPT, CRITIQUE_USER_TEMPLATE
+from src.agents.schemas import Critique, VideoState
+from src.agents.utils import (
+    as_dict,
+    compact,
+    trim_research_for_critique,
+    trim_script,
+)
+
+logger = logging.getLogger(__name__)
 
 
 _llm = get_llm(temperature=0.1).with_structured_output(
-    Critique, method="function_calling"
+    Critique, method="json_schema", strict=True
 )
-
-
-def _trim_research(research: dict) -> dict:
-    return {
-        "summary": research.get("summary", ""),
-        "key_facts": research.get("key_facts", []),
-        "stats": research.get("stats", []),
-        "controversies": research.get("controversies", []),
-        "sources": research.get("sources", []),
-    }
 
 
 def critique_node(state: VideoState) -> dict:
@@ -29,11 +27,16 @@ def critique_node(state: VideoState) -> dict:
         audience=state.get("audience", "general"),
         tone=state.get("tone", "engaging"),
         goal=state.get("goal", "educate and entertain"),
-        research_json=json.dumps(_trim_research(state.get("research") or {}), indent=2),
-        script_json=json.dumps(state.get("script") or {}, indent=2),
+        research_json=compact(trim_research_for_critique(as_dict(state.get("research")))),
+        script_json=compact(trim_script(as_dict(state.get("script")))),
     )
 
-    critique: Critique = _llm.invoke([
+    logger.info(
+        "critique prompt chars=%d",
+        len(user_prompt) + len(CRITIQUE_SYSTEM_PROMPT),
+    )
+
+    critique: Critique = invoke_with_retry(_llm, [
         SystemMessage(content=CRITIQUE_SYSTEM_PROMPT),
         HumanMessage(content=user_prompt),
     ])

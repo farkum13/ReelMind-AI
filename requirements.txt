@@ -8,7 +8,7 @@ click==8.5.0
 decorator==5.3.1
 detect-installer==0.2.1
 dnspython==2.8.0
-edge-tts==7.2.8
+edge-tts==7.3.1
 email-validator==2.3.0
 fastapi==0.142.2
 fastapi-cli==0.0.32

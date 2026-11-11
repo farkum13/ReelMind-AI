@@ -28,7 +28,7 @@ class ScriptPayload(BaseModel):
     sources: list[str] = Field(default_factory=list)
     unverified_claims: list[str] = Field(default_factory=list)
     language: str = "en"                # reserved for the Hindi seam
-    visual_model: str = "flux.1-schnell"
+    visual_model: str = "flux"
     visual_width: int = 1024
     visual_height: int = 1792          # ~9:16
     visual_style: str = ""
